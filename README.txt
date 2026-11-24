@@ -38,3 +38,21 @@ The project uses Android Gradle Plugin 8.7.3, Kotlin 2.0.21, compile SDK 35,
 and minimum Android 8.0 (API 26).
 
 This is a starter project, not a signed Play Store release APK.
+
+
+AUTOMATED APK BUILD WITH GITHUB ACTIONS
+========================================
+1. Create/sign in to a GitHub account.
+2. Create a new repository, e.g. FileFinder.
+3. Upload the contents of this project folder to the repository (the .github
+   folder must be included) and commit them to the main branch.
+4. Open the repository's Actions tab.
+5. Select "Build Android APK" and click "Run workflow" if it has not started
+   automatically after your upload.
+6. When the run finishes successfully, open the run and download the
+   "FileFinder-debug-apk" artifact.
+7. Extract the downloaded artifact ZIP. It contains app-debug.apk.
+8. Transfer app-debug.apk to your Android phone and install it. You may need
+   to allow installation from that file manager/browser when Android prompts.
+
+This is a debug APK for personal testing, not a Play Store release.
