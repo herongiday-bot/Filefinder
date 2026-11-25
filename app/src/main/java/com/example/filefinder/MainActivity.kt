@@ -1,13 +1,11 @@
 package com.example.filefinder
 
-import android.app.AlertDialog
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
-import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
-import android.view.Gravity
-import android.view.View
+import android.graphics.Typeface
 import android.widget.*
 import androidx.documentfile.provider.DocumentFile
 import java.text.DateFormat
@@ -16,25 +14,30 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
 class MainActivity : Activity() {
-    private val orange = 0xFFFF8A00.toInt()
-    private val background = 0xFF101010.toInt()
-    private val panel = 0xFF1C1C1C.toInt()
-    private val muted = 0xFFAAAAAA.toInt()
-    private val white = 0xFFF5F5F5.toInt()
+
+    private val COLOR_ORANGE = 0xFFFF8A00.toInt()
+    private val COLOR_BG = 0xFF101010.toInt()
+    private val COLOR_PANEL = 0xFF1C1C1C.toInt()
+    private val COLOR_MUTED = 0xFFAAAAAA.toInt()
+    private val COLOR_WHITE = 0xFFF5F5F5.toInt()
+
     private val prefs by lazy { getSharedPreferences("finder", MODE_PRIVATE) }
     private val executor = Executors.newSingleThreadExecutor()
     private val roots = mutableListOf<DocumentFile>()
+    private val searchVersion = AtomicInteger(0)
+
     private lateinit var query: EditText
     private lateinit var results: LinearLayout
     private lateinit var status: TextView
     private lateinit var count: TextView
-    private var searchVersion = AtomicInteger(0)
 
-    companion object { private const val PICK_FOLDER = 41 }
+    companion object {
+        private const val PICK_FOLDER = 41
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setBackgroundColor(this@MainActivity.background)
+        buildScreen()
         restoreFolders()
         showWelcome()
     }
@@ -43,14 +46,14 @@ class MainActivity : Activity() {
         val page = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(22), dp(20), dp(12))
-            setBackgroundColor(background)
+            setBackgroundColor(COLOR_BG)
         }
 
         val brand = TextView(this).apply {
             text = "FILE FINDER"
             textSize = 13f
-            letterSpacing = .18f
-            setTextColor(orange)
+            letterSpacing = 0.18f
+            setTextColor(COLOR_ORANGE)
             typeface = Typeface.DEFAULT_BOLD
         }
         page.addView(brand)
@@ -58,7 +61,7 @@ class MainActivity : Activity() {
         val title = TextView(this).apply {
             text = "Find anything."
             textSize = 30f
-            setTextColor(white)
+            setTextColor(COLOR_WHITE)
             typeface = Typeface.create("sans-serif", Typeface.BOLD)
             setPadding(0, dp(8), 0, dp(4))
         }
@@ -67,78 +70,94 @@ class MainActivity : Activity() {
         val subtitle = TextView(this).apply {
             text = "Search files across folders you choose."
             textSize = 14f
-            setTextColor(muted)
+            setTextColor(COLOR_MUTED)
         }
         page.addView(subtitle)
 
         query = EditText(this).apply {
             hint = "Search by file name or extension…"
             setHintTextColor(0xFF777777.toInt())
-            setTextColor(white)
+            setTextColor(COLOR_WHITE)
             textSize = 16f
             setSingleLine(true)
             setPadding(dp(14), 0, dp(14), 0)
-            background = rounded(panel, dp(12))
+            background = rounded(COLOR_PANEL, dp(12))
         }
+
         val searchBox = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
             setPadding(0, dp(22), 0, dp(12))
         }
         searchBox.addView(query, LinearLayout.LayoutParams(0, dp(52), 1f))
+
         val go = Button(this).apply {
             text = "SEARCH"
             setTextColor(0xFF171717.toInt())
-            setBackgroundColor(orange)
+            setBackgroundColor(COLOR_ORANGE)
             isAllCaps = false
             setOnClickListener { searchFiles(query.text.toString()) }
         }
-        val goParams = LinearLayout.LayoutParams(dp(94), dp(52)).apply { leftMargin = dp(8) }
+        val goParams = LinearLayout.LayoutParams(dp(94), dp(52)).apply {
+            leftMargin = dp(8)
+        }
         searchBox.addView(go, goParams)
         page.addView(searchBox)
 
         val choose = Button(this).apply {
             text = "＋  Choose folders to search"
             isAllCaps = false
-            setTextColor(orange)
-            setBackgroundColor(panel)
+            setTextColor(COLOR_ORANGE)
+            setBackgroundColor(COLOR_PANEL)
             setOnClickListener { chooseFolder() }
         }
         page.addView(choose, LinearLayout.LayoutParams(-1, dp(48)))
 
         val infoRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
             setPadding(0, dp(18), 0, dp(8))
         }
+
         status = TextView(this).apply {
             text = "Ready"
             textSize = 13f
-            setTextColor(muted)
+            setTextColor(COLOR_MUTED)
         }
         count = TextView(this).apply {
             text = ""
             textSize = 13f
-            setTextColor(orange)
-            gravity = Gravity.RIGHT
+            setTextColor(COLOR_ORANGE)
+            gravity = android.view.Gravity.RIGHT
         }
         infoRow.addView(status, LinearLayout.LayoutParams(0, -2, 1f))
         infoRow.addView(count, LinearLayout.LayoutParams(0, -2, 1f))
         page.addView(infoRow)
 
         val scroll = ScrollView(this)
-        results = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        results = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
         scroll.addView(results)
         page.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
         setContentView(page)
 
         query.addTextChangedListener(object : android.text.TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            override fun beforeTextChanged(
+                s: CharSequence?, start: Int, count: Int, after: Int
+            ) {}
+
+            override fun onTextChanged(
+                s: CharSequence?, start: Int, before: Int, count: Int
+            ) {
                 val term = s?.toString().orEmpty()
-                if (term.length >= 2) searchFiles(term)
-                else if (term.isEmpty()) showWelcome()
+                if (term.length >= 2) {
+                    searchFiles(term)
+                } else if (term.isEmpty()) {
+                    showWelcome()
+                }
             }
+
             override fun afterTextChanged(s: android.text.Editable?) {}
         })
     }
@@ -157,13 +176,25 @@ class MainActivity : Activity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == PICK_FOLDER && resultCode == RESULT_OK) {
             val uri = data?.data ?: return
-            val flags = (data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION))
-            try { contentResolver.takePersistableUriPermission(uri, flags) } catch (_: Exception) {}
-            if (roots.none { it.uri == uri }) roots.add(DocumentFile.fromTreeUri(this, uri)!!)
+            val flags = data.flags and
+                (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+
+            try {
+                contentResolver.takePersistableUriPermission(uri, flags)
+            } catch (_: Exception) {
+            }
+
+            if (roots.none { it.uri == uri }) {
+                DocumentFile.fromTreeUri(this, uri)?.let { roots.add(it) }
+            }
             saveFolders()
             status.text = "${roots.size} folder location(s) selected"
-            if (query.text.length >= 2) searchFiles(query.text.toString())
-            else showWelcome()
+
+            if (query.text.length >= 2) {
+                searchFiles(query.text.toString())
+            } else {
+                showWelcome()
+            }
         }
     }
 
@@ -171,47 +202,79 @@ class MainActivity : Activity() {
         prefs.getStringSet("uris", emptySet())?.forEach { raw ->
             try {
                 val uri = Uri.parse(raw)
-                contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                contentResolver.takePersistableUriPermission(
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
                 DocumentFile.fromTreeUri(this, uri)?.let { roots.add(it) }
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
     }
 
     private fun saveFolders() {
-        prefs.edit().putStringSet("uris", roots.map { it.uri.toString() }.toSet()).apply()
+        prefs.edit()
+            .putStringSet("uris", roots.map { it.uri.toString() }.toSet())
+            .apply()
     }
 
     private fun searchFiles(raw: String) {
         val term = raw.trim().lowercase()
         if (term.length < 2) return
+
         val version = searchVersion.incrementAndGet()
         status.text = "Searching…"
         count.text = ""
         results.removeAllViews()
+
         executor.execute {
             val found = mutableListOf<DocumentFile>()
             var visited = 0
+
             fun walk(folder: DocumentFile, depth: Int) {
                 if (depth > 30 || found.size >= 500) return
-                val children = try { folder.listFiles() } catch (_: Exception) { emptyArray() }
+
+                val children = try {
+                    folder.listFiles()
+                } catch (_: Exception) {
+                    emptyArray()
+                }
+
                 for (file in children) {
                     visited++
-                    if (file.name.orEmpty().lowercase().contains(term)) found.add(file)
-                    if (file.isDirectory) walk(file, depth + 1)
+                    if (file.name.orEmpty().lowercase().contains(term)) {
+                        found.add(file)
+                    }
+                    if (file.isDirectory) {
+                        walk(file, depth + 1)
+                    }
                     if (found.size >= 500) break
                 }
             }
+
             roots.forEach { walk(it, 0) }
+
             runOnUiThread {
                 if (version != searchVersion.get()) return@runOnUiThread
-                status.text = if (roots.isEmpty()) "Choose at least one folder to begin." else "Searched $visited files and folders"
-                count.text = "${found.size} result(s)"
-                if (roots.isEmpty()) {
-                    addMessage("No folders selected", "Tap “Choose folders to search” and select a folder such as Internal storage or Downloads.")
-                } else if (found.isEmpty()) {
-                    addMessage("No matches found", "Try a shorter name or search for an extension such as .pdf or .xlsx.")
+
+                status.text = if (roots.isEmpty()) {
+                    "Choose at least one folder to begin."
                 } else {
-                    found.sortedBy { it.name?.lowercase() }.forEach { addFileRow(it) }
+                    "Searched $visited files and folders"
+                }
+                count.text = "${found.size} result(s)"
+
+                when {
+                    roots.isEmpty() -> addMessage(
+                        "No folders selected",
+                        "Tap “Choose folders to search” and select a folder such as Internal storage or Downloads."
+                    )
+                    found.isEmpty() -> addMessage(
+                        "No matches found",
+                        "Try a shorter name or search for an extension such as .pdf or .xlsx."
+                    )
+                    else -> found.sortedBy { it.name?.lowercase() }.forEach {
+                        addFileRow(it)
+                    }
                 }
             }
         }
@@ -221,59 +284,83 @@ class MainActivity : Activity() {
         val card = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(14), dp(12), dp(14), dp(12))
-            background = rounded(panel, dp(10))
+            background = rounded(COLOR_PANEL, dp(10))
         }
+
         val name = TextView(this).apply {
             text = file.name ?: "Unnamed file"
             textSize = 15f
-            setTextColor(white)
+            setTextColor(COLOR_WHITE)
             typeface = Typeface.DEFAULT_BOLD
         }
+
         val details = TextView(this).apply {
             val size = if (file.isFile) formatSize(file.length()) else "Folder"
-            val date = if (file.lastModified() > 0) DateFormat.getDateInstance().format(Date(file.lastModified())) else "Date unavailable"
+            val date = if (file.lastModified() > 0) {
+                DateFormat.getDateInstance().format(Date(file.lastModified()))
+            } else {
+                "Date unavailable"
+            }
             text = "$size  •  $date"
             textSize = 12f
-            setTextColor(muted)
+            setTextColor(COLOR_MUTED)
             setPadding(0, dp(5), 0, 0)
         }
+
         val actions = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.RIGHT
+            gravity = android.view.Gravity.RIGHT
         }
-        val open = smallButton("OPEN") { openFile(file) }
-        val share = smallButton("SHARE") { shareFile(file) }
-        actions.addView(open)
-        actions.addView(share)
-        if (file.canWrite()) actions.addView(smallButton("DELETE") {
-            AlertDialog.Builder(this).setTitle("Delete file?")
-                .setMessage("Delete ${file.name}? This cannot be undone.")
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Delete") { _, _ ->
-                    if (file.delete()) searchFiles(query.text.toString())
-                    else Toast.makeText(this, "Could not delete this item.", Toast.LENGTH_SHORT).show()
-                }.show()
-        })
+        actions.addView(smallButton("OPEN") { openFile(file) })
+        actions.addView(smallButton("SHARE") { shareFile(file) })
+
+        if (file.canWrite()) {
+            actions.addView(smallButton("DELETE") {
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle("Delete file?")
+                    .setMessage("Delete ${file.name}? This cannot be undone.")
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Delete") { _, _ ->
+                        if (file.delete()) {
+                            searchFiles(query.text.toString())
+                        } else {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Could not delete this item.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                    .show()
+            })
+        }
+
         card.addView(name)
         card.addView(details)
         card.addView(actions)
-        val params = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(9) }
+
+        val params = LinearLayout.LayoutParams(-1, -2).apply {
+            bottomMargin = dp(9)
+        }
         results.addView(card, params)
     }
 
-    private fun smallButton(label: String, action: () -> Unit) = Button(this).apply {
-        text = label
-        textSize = 10f
-        isAllCaps = true
-        setTextColor(orange)
-        setBackgroundColor(panel)
-        setOnClickListener { action() }
+    private fun smallButton(label: String, action: () -> Unit): Button {
+        return Button(this).apply {
+            text = label
+            textSize = 10f
+            isAllCaps = true
+            setTextColor(COLOR_ORANGE)
+            setBackgroundColor(COLOR_PANEL)
+            setOnClickListener { action() }
+        }
     }
 
     private fun openFile(file: DocumentFile) {
         try {
             val mime = contentResolver.getType(file.uri) ?: "*/*"
-            val intent = Intent(Intent.ACTION_VIEW).setDataAndType(file.uri, mime)
+            val intent = Intent(Intent.ACTION_VIEW)
+                .setDataAndType(file.uri, mime)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             startActivity(intent)
         } catch (_: Exception) {
@@ -296,11 +383,18 @@ class MainActivity : Activity() {
 
     private fun showWelcome() {
         results.removeAllViews()
+
         if (roots.isEmpty()) {
-            addMessage("Welcome to File Finder", "Choose the folders you want to search. You can select more than one folder, then search by filename or extension.")
+            addMessage(
+                "Welcome to File Finder",
+                "Choose the folders you want to search. You can select more than one folder, then search by filename or extension."
+            )
             status.text = "No folders selected"
         } else {
-            addMessage("Ready to search", "${roots.size} folder location(s) selected. Type at least two characters to see live results, or press SEARCH.")
+            addMessage(
+                "Ready to search",
+                "${roots.size} folder location(s) selected. Type at least two characters to see live results, or press SEARCH."
+            )
             status.text = "Ready"
         }
         count.text = ""
@@ -310,30 +404,34 @@ class MainActivity : Activity() {
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(18), dp(20), dp(18), dp(20))
-            background = rounded(panel, dp(12))
+            background = rounded(COLOR_PANEL, dp(12))
         }
+
         val title = TextView(this).apply {
             text = titleText
             textSize = 17f
-            setTextColor(white)
+            setTextColor(COLOR_WHITE)
             typeface = Typeface.DEFAULT_BOLD
         }
+
         val body = TextView(this).apply {
             text = bodyText
             textSize = 13f
-            setTextColor(muted)
+            setTextColor(COLOR_MUTED)
             setPadding(0, dp(8), 0, 0)
         }
+
         box.addView(title)
         box.addView(body)
         results.addView(box)
     }
 
-    private fun rounded(color: Int, radius: Int): android.graphics.drawable.GradientDrawable =
-        android.graphics.drawable.GradientDrawable().apply {
+    private fun rounded(color: Int, radius: Int): android.graphics.drawable.GradientDrawable {
+        return android.graphics.drawable.GradientDrawable().apply {
             setColor(color)
             cornerRadius = radius.toFloat()
         }
+    }
 
     private fun formatSize(bytes: Long): String {
         if (bytes < 1024) return "$bytes B"
@@ -344,7 +442,9 @@ class MainActivity : Activity() {
         return String.format("%.2f GB", mb / 1024.0)
     }
 
-    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).toInt()
+    }
 
     override fun onDestroy() {
         executor.shutdownNow()
