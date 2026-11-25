@@ -1,5 +1,6 @@
 package com.example.filefinder
 
+import android.app.AlertDialog
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Typeface
@@ -75,9 +76,9 @@ class MainActivity : Activity() {
             setHintTextColor(0xFF777777.toInt())
             setTextColor(white)
             textSize = 16f
-            singleLine = true
+            setSingleLine(true)
             setPadding(dp(14), 0, dp(14), 0)
-            background = rounded(panel, dp(12))
+            background = rounded(panel, dp(12))setBackgroundColor(this@MainActivity.background)
         }
         val searchBox = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
