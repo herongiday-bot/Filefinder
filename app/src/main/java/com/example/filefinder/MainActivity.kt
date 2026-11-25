@@ -34,7 +34,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        buildScreen()
+        setBackgroundColor(this@MainActivity.background)
         restoreFolders()
         showWelcome()
     }
@@ -78,7 +78,7 @@ class MainActivity : Activity() {
             textSize = 16f
             setSingleLine(true)
             setPadding(dp(14), 0, dp(14), 0)
-            background = rounded(panel, dp(12))setBackgroundColor(this@MainActivity.background)
+            background = rounded(panel, dp(12))
         }
         val searchBox = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
